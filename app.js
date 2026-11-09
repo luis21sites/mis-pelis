@@ -3,7 +3,7 @@
    Los datos viven en el navegador (IndexedDB). La copia en la nube es opcional
    y va cifrada con tu contraseña antes de salir del dispositivo. */
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const IMG = 'https://image.tmdb.org/t/p/';
 const BACKUP_FILE = 'mis-pelis.enc.json';
 
@@ -365,6 +365,9 @@ const STATUS = {
   tv: [['pending', 'Pendiente'], ['watching', 'Viendo'], ['seen', 'Terminada'], ['dropped', 'Abandonada']]
 };
 const statusLabel = it => (STATUS[it.type].find(s => s[0] === it.status) || [, ''])[1];
+const clampRating = v => Math.min(10, Math.max(1, Math.round(v * 10) / 10));
+const fmtRating = v => (Math.round(v * 10) / 10).toFixed(1);
+const ratingValHtml = v => v != null ? `${fmtRating(v)}<small>/10</small>` : '–<small>sin nota</small>';
 const num = v => { const n = parseFloat(String(v ?? '').replace(',', '.')); return isNaN(n) ? -1 : n; };
 
 function posterHtml(path, cls = 'poster', size = 'w185') {
@@ -389,7 +392,7 @@ function cardHtml(it, mode) {
     ? (it.seenDate ? fmtDate(it.seenDate) : '')
     : (it.comment ? esc(it.comment.slice(0, 60)) : '');
   const right = mode === 'seen'
-    ? `<div class="mine">${it.myRating ?? '–'}<small>tu nota</small></div>` : '';
+    ? `<div class="mine">${it.myRating != null ? fmtRating(it.myRating) : '–'}<small>tu nota</small></div>` : '';
   return `<button class="card" data-act="open" data-id="${esc(it.id)}">
     ${posterHtml(it.poster)}
     <div class="info">
@@ -590,9 +593,17 @@ function renderSheet() {
       <div class="seg">${STATUS[it.type].map(([v, l]) =>
         `<button data-act="status" data-val="${v}" class="${it.status === v ? 'on' : ''}">${l}</button>`).join('')}</div>
       ${showSeen ? `
-        <div class="label">Tu nota ${it.myRating ? `<b style="color:var(--accent)">${it.myRating}/10</b>` : '(toca para puntuar)'}</div>
-        <div class="stars">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n =>
-          `<button data-act="rate" data-val="${n}" class="${it.myRating === n ? 'on' : (it.myRating && n < it.myRating ? 'in' : '')}">${n}</button>`).join('')}</div>
+        <div class="label">Tu nota</div>
+        <div class="rating">
+          <button class="step" data-act="rate-step" data-val="-0.1" aria-label="Bajar 0.1">−</button>
+          <div class="rating-val" id="rating-val">${ratingValHtml(it.myRating)}</div>
+          <button class="step" data-act="rate-step" data-val="0.1" aria-label="Subir 0.1">+</button>
+        </div>
+        <input type="range" class="slider" id="rating-slider" min="1" max="10" step="0.1" value="${it.myRating ?? 5.5}">
+        <div class="row" style="justify-content:space-between">
+          <span class="small">Arrastra y afina con − / + (de 0,1 en 0,1)</span>
+          ${it.myRating != null ? '<button class="link" data-act="rate-clear">Quitar nota</button>' : ''}
+        </div>
         <div class="label">${it.type === 'tv' && it.status === 'watching' ? 'Empezada el' : 'Vista el'}</div>
         <input type="date" data-field="seenDate" value="${esc(it.seenDate || '')}" max="${localToday()}">` : ''}
       <div class="label">Comentario${it.status === 'pending' ? ' (ej.: quién te la recomendó)' : ''}</div>
@@ -696,11 +707,14 @@ document.addEventListener('click', async e => {
       cur.item.status = el.dataset.val;
       if (cur.item.status !== 'pending' && !cur.item.seenDate) cur.item.seenDate = localToday();
       return renderSheet();
-    case 'rate': {
-      const n = +el.dataset.val;
-      cur.item.myRating = cur.item.myRating === n ? null : n;
+    case 'rate-step': {
+      const base = cur.item.myRating ?? 5.5;
+      cur.item.myRating = clampRating(base + +el.dataset.val);
       return renderSheet();
     }
+    case 'rate-clear':
+      cur.item.myRating = null;
+      return renderSheet();
     case 'refresh': return refreshRatings(false);
     case 'save': return saveSheet();
     case 'delete': return deleteSheet();
@@ -734,6 +748,7 @@ document.addEventListener('click', async e => {
 document.addEventListener('change', e => {
   const el = e.target;
   if (el.dataset.act === 'sort') { ui[el.dataset.key] = el.value; render(); }
+  if (el.id === 'rating-slider' && cur) renderSheet();
   if (el.id === 'import-file' && el.files[0]) { importBackup(el.files[0]); el.value = ''; }
 });
 
@@ -741,6 +756,11 @@ document.addEventListener('input', e => {
   const el = e.target;
   if (el.id === 'seen-q') { ui.seenQ = el.value; $('#list').innerHTML = renderSeenList(); }
   if (el.id === 'search-q') ui.searchQ = el.value;
+  if (el.id === 'rating-slider' && cur && cur.item) {
+    // Mientras arrastras solo se actualiza el número (para no cortar el gesto)
+    cur.item.myRating = clampRating(+el.value);
+    $('#rating-val').innerHTML = ratingValHtml(cur.item.myRating);
+  }
   if (el.dataset.field && cur && cur.item) cur.item[el.dataset.field] = el.value;
 });
 

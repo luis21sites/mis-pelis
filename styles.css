@@ -165,6 +165,15 @@ textarea { min-height: 80px; resize: vertical; }
 }
 .stars button.on { background: var(--accent); color: #111; border-color: var(--accent); }
 .stars button.in { background: rgba(245, 197, 24, .18); border-color: rgba(245, 197, 24, .4); }
+.rating { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 4px 0 10px; }
+.rating .step {
+  width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line);
+  background: var(--card2); font-size: 24px; font-weight: 600; line-height: 1;
+}
+.rating .step:active { background: var(--accent); color: #111; }
+.rating-val { min-width: 120px; text-align: center; font-size: 40px; font-weight: 700; color: var(--accent); }
+.rating-val small { font-size: 15px; color: var(--muted); font-weight: 400; margin-left: 2px; }
+.slider { width: 100%; accent-color: var(--accent); height: 32px; margin: 0 0 4px; }
 .actions { display: flex; gap: 8px; margin-top: 16px; }
 .actions .btn { flex: 1; }
 
