@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#14161e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Mis Pelis">
+  <meta name="referrer" content="no-referrer">
+  <title>Mis Pelis</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="top">
+    <h1 id="title">Vistas</h1>
+    <button id="sync-btn" data-act="sync" aria-label="Sincronizar"><span id="sync-dot" class="dot"></span></button>
+  </header>
+
+  <main id="view"></main>
+
+  <nav id="tabs">
+    <button data-tab="seen"><span>🎬</span>Vistas</button>
+    <button data-tab="pending"><span>🕒</span>Pendientes</button>
+    <button data-tab="search"><span>🔍</span>Buscar</button>
+    <button data-tab="settings"><span>⚙️</span>Ajustes</button>
+  </nav>
+
+  <div id="sheet" hidden></div>
+  <div id="toast" role="status"></div>
+  <input type="file" id="import-file" accept=".json,application/json" hidden>
+
+  <script src="app.js"></script>
+</body>
+</html>
